@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP活用事例：Google広告異常検知分析</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #7B8471 0%, #94A684 25%, #B8C5A6 50%, #D4E2C8 75%, #E8F2E0 100%);
+            color: #2D3A2E;
+        }
+        
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+        
+        .slide.active {
+            display: flex;
+        }
+        
+        .slide h1 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            color: #1C2B1C;
+            font-weight: 600;
+        }
+        
+        .slide h2 {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            color: #2D3A2E;
+            font-weight: 500;
+        }
+        
+        .slide h3 {
+            font-size: 1.6em;
+            margin-bottom: 15px;
+            color: #3F5A3F;
+            font-weight: 500;
+        }
+        
+        .slide p, .slide li {
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            max-width: 800px;
+            color: #2D3A2E;
+        }
+        
+        .slide ul {
+            text-align: left;
+            max-width: 800px;
+        }
+        
+        .definition-box {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid #94A684;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            max-width: 900px;
+            box-shadow: 0 6px 20px rgba(123, 132, 113, 0.15);
+        }
+        
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 6px 20px rgba(123, 132, 113, 0.15);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #2D3A2E;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #B8C5A6;
+        }
+        
+        th {
+            background: rgba(148, 166, 132, 0.25);
+            font-weight: 600;
+            color: #1C2B1C;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #94A684;
+            color: #2D3A2E;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(123, 132, 113, 0.2);
+        }
+        
+        .nav-btn:hover {
+            background: #94A684;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(123, 132, 113, 0.3);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2D3A2E;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #94A684;
+            box-shadow: 0 4px 12px rgba(123, 132, 113, 0.15);
+        }
+        
+        .highlight {
+            background: rgba(212, 226, 200, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+            color: #1C2B1C;
+        }
+        
+        .process-step {
+            background: rgba(255, 255, 255, 0.8);
+            border-left: 4px solid #94A684;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(123, 132, 113, 0.1);
+        }
+        
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 0 5px 18px rgba(123, 132, 113, 0.12);
+            border: 1px solid #D4E2C8;
+        }
+        
+        .menu-item {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 8px 0;
+            border-left: 4px solid #94A684;
+            box-shadow: 0 3px 12px rgba(123, 132, 113, 0.08);
+        }
+        
+        .menu-item h4 {
+            color: #1C2B1C;
+            margin: 0 0 8px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+        .menu-item p {
+            margin: 0;
+            font-size: 1em;
+            color: #3F5A3F;
+        }
+    </style>
+</head>
+<body>
+    <!-- スライド1: タイトル -->
+    <div class="slide active">
+        <h1>🔍 MCP活用事例</h1>
+        <h2>Google広告異常検知分析</h2>
+        <br>
+        <p style="font-size: 1.1em; color: #7B8471;">2025年 社内共有資料</p>
+    </div>
+
+
+
+    <!-- スライド2: MCPとは -->
+    <div class="slide">
+        <h2>🔧 MCP（Model Context Protocol）とは</h2>
+        
+        <div class="definition-box">
+            <h3 style="color: #1C2B1C; margin-top: 0;">用語説明</h3>
+            <p><strong>MCP（Model Context Protocol）</strong>は、AIが外部のファイルやアプリケーションと直接連携できる新しい技術プロトコルです。従来の「指示を出して人間が実行」から「AIが直接作業を代行」へと変化させる革新的な仕組みです。</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px; margin-top: 30px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3 style="color: #8B4513;">従来のAI活用</h3>
+                <ul style="color: #2D3A2E;">
+                    <li><span class="highlight">指導型</span>: 「こうやってください」（説明のみ）</li>
+                    <li><span class="highlight">手動実行</span>: 人間がコピペ・設定・実行</li>
+                    <li><span class="highlight">品質バラつき</span>: 実行者のスキルに依存</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3 style="color: #228B22;">MCPでのAI活用</h3>
+                <ul style="color: #2D3A2E;">
+                    <li><span class="highlight">実行型</span>: 「一緒にやりましょう」（代行実行）</li>
+                    <li><span class="highlight">自動処理</span>: AIが直接ファイル操作・分析実行</li>
+                    <li><span class="highlight">品質保証</span>: AI自身が結果を検証・改善</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: linear-gradient(135deg, #FFE4B5, #FFF8DC); border-left: 4px solid #DAA520; border-radius: 8px; max-width: 800px; box-shadow: 0 3px 10px rgba(218, 165, 32, 0.2);">
+            <p style="margin: 0; font-size: 0.85em; color: #8B4513; font-weight: 500; line-height: 1.4;">⚠️ <strong>重要な前提</strong>：MCPは「仕組み（プロトコル）」であり、それ自体が機能を果たすというより、環境設定を通じて初めて活用できるものです。効果的な活用には、事前の環境整備と設定が必要です。</p>
+        </div>
+    </div>
+
+
+
+    <!-- スライド3: 今回やったこと -->
+    <div class="slide">
+        <h2>🎯 今回やったこと：MCP検証の全体像</h2>
+        
+        <div class="definition-box">
+            <h3 style="color: #1C2B1C; margin-top: 0;">検証の目的</h3>
+            <p>MCP（Model Context Protocol）でPC内のファイルを直接参照・処理できるよう環境構築を行ったうえで、従来の手作業による広告分析を自動化し、業務効率化とデータ分析品質向上の可能性を検証しました。</p>
+            <p style="margin-top: 15px; font-weight: 600;">活用技術：MCP + Claude + R / Python</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px; margin-top: 20px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 15px; border: 2px solid #94A684;">
+                <h3><span style="background: #94A684; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">1</span>データ準備</h3>
+                <ul style="text-align: left; margin: 0;">
+                    <li>Google広告の実際のCSVデータ（125日分）</li>
+                    <li>文字化け問題が発生したリアルな環境</li>
+                    <li>複数キャンペーンタイプの混在データ</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px; border: 4px solid #94A684; box-shadow: 0 8px 25px rgba(148, 166, 132, 0.3);">
+                <h3><span style="background: #94A684; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">2</span>MCP実行</h3>
+                <ul style="text-align: left; margin: 0;">
+                    <li>Claude（AI）が直接ファイルを読み込み</li>
+                    <li>自動的にデータクレンジング実行</li>
+                    <li>統計的異常検知アルゴリズム適用</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px; border: 2px solid #94A684;">
+                <h3><span style="background: #94A684; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">3</span>結果検証</h3>
+                <ul style="text-align: left; margin: 0;">
+                    <li>従来手法との時間・品質比較</li>
+                    <li>発見された異常パターンの妥当性確認</li>
+                    <li>実用性・再現性の評価</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド6: 実証事例 -->
+    <div class="slide">
+        <h2>📊 実証事例：Google広告異常検知分析</h2>
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 20px;">
+                <h3>クライアント課題</h3>
+                <ul>
+                    <li>突発的なコスト急騰の早期発見</li>
+                    <li>キャンペーン変更の影響把握</li>
+                    <li>データドリブンな運用改善</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 20px;">
+                <h3>従来の対応方法</h3>
+                <ul>
+                    <li>手動でのデータ確認（週1回）</li>
+                    <li>Excelでの基本集計</li>
+                    <li>経験則による判断</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド7: 解決プロセス -->
+    <div class="slide">
+        <h2>🔍 MCP活用による解決プロセス</h2>
+        <div style="display: flex; flex-direction: column; max-width: 1000px;">
+            <div class="process-step">
+                <h3>Step 1: データ理解（1分）</h3>
+                <p>CSVファイルの文字化け自動解決 → 125日分のデータ構造把握 → キャンペーンタイプ別の整理</p>
+            </div>
+            <div class="process-step">
+                <h3>Step 2: 異常検知実行（5分）</h3>
+                <p>IQR法・Z-score法・移動平均法の組み合わせ → 総費用・CPC・CTR・クリック数の多角分析 → 視覚的なグラフ生成</p>
+            </div>
+            <div class="process-step">
+                <h3>Step 3: 洞察抽出（4分）</h3>
+                <p>11月30日の異常高コスト特定 → P-MAX・デマンドジェネレーション導入影響分析 → 実用的なアクションプラン提示</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド8: 検出された異常パターン -->
+    <div class="slide">
+        <h2>🎯 検出された重要な異常パターン</h2>
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>🔥 異常高コスト</h3>
+                <ul>
+                    <li><strong>11月30日</strong>: 通常の2.3倍</li>
+                    <li><strong>原因仮説</strong>: 月末予算消化・競合動向変化</li>
+                    <li><strong>アクション</strong>: 予算管理見直し・アラート設定</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>📈 キャンペーン構成変更の影響</h3>
+                <ul>
+                    <li><strong>11/8</strong>: デマンドジェネレーション開始</li>
+                    <li><strong>11/21</strong>: P-MAX導入（ディスプレイ停止）</li>
+                    <li><strong>効果</strong>: 運用方針の大幅シフトを定量化</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド9: 比較表 -->
+    <div class="slide">
+        <h2>💼 従来手法 vs MCP活用の比較</h2>
+        <div class="comparison-table">
+            <table>
+                <tr>
+                    <th>項目</th>
+                    <th>従来手法</th>
+                    <th>MCP活用</th>
+                </tr>
+                <tr>
+                    <td><strong>分析時間</strong></td>
+                    <td>2-3時間</td>
+                    <td><span class="highlight">10分</span></td>
+                </tr>
+                <tr>
+                    <td><strong>データ処理</strong></td>
+                    <td>手動加工</td>
+                    <td><span class="highlight">自動前処理</span></td>
+                </tr>
+                <tr>
+                    <td><strong>異常検知</strong></td>
+                    <td>経験則判断</td>
+                    <td><span class="highlight">統計的手法</span></td>
+                </tr>
+                <tr>
+                    <td><strong>レポート作成</strong></td>
+                    <td>手作業</td>
+                    <td><span class="highlight">自動生成</span></td>
+                </tr>
+                <tr>
+                    <td><strong>品質</strong></td>
+                    <td>属人的</td>
+                    <td><span class="highlight">標準化</span></td>
+                </tr>
+                <tr>
+                    <td><strong>再現性</strong></td>
+                    <td>困難</td>
+                    <td><span class="highlight">完全再現可能</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- スライド10: 活用メニュー -->
+    <div class="slide">
+        <h2>🚀 広告代理店でのMCP活用メニュー</h2>
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px;">
+            <div style="flex: 1; margin: 0 20px;">
+                <h3>📊 データ分析・監視</h3>
+                <div class="menu-item">
+                    <h4>リアルタイム異常検知</h4>
+                    <p>日次・時間別の自動監視とアラート</p>
+                </div>
+                <div class="menu-item">
+                    <h4>予測分析</h4>
+                    <p>将来のパフォーマンス・季節性予測</p>
+                </div>
+                <div class="menu-item">
+                    <h4>競合・市場分析</h4>
+                    <p>業界トレンドとの相関分析</p>
+                </div>
+                <div class="menu-item">
+                    <h4>ROI最適化</h4>
+                    <p>予算配分シミュレーション</p>
+                </div>
+            </div>
+            <div style="flex: 1; margin: 0 20px;">
+                <h3>📱 マーケティング支援</h3>
+                <div class="menu-item">
+                    <h4>A/Bテスト自動化</h4>
+                    <p>クリエイティブ効果測定の完全自動化</p>
+                </div>
+                <div class="menu-item">
+                    <h4>ターゲティング最適化</h4>
+                    <p>ユーザー行動パターン分析</p>
+                </div>
+                <div class="menu-item">
+                    <h4>レポート自動生成</h4>
+                    <p>クライアント向け分析レポート作成</p>
+                </div>
+                <div class="menu-item">
+                    <h4>提案資料作成</h4>
+                    <p>データドリブンな企画書・提案書</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド11: ROI効果 -->
+    <div class="slide">
+        <h2>📈 期待される効果・ROI</h2>
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>業務効率化</h3>
+                <ul>
+                    <li><span class="highlight">分析時間</span>: 80%削減（3時間→30分）</li>
+                    <li><span class="highlight">レポート作成</span>: 90%削減（2時間→10分）</li>
+                    <li><span class="highlight">品質向上</span>: エラー率50%削減</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>クライアント価値向上</h3>
+                <ul>
+                    <li><span class="highlight">早期問題発見</span>: 予算ロス防止</li>
+                    <li><span class="highlight">データドリブン提案</span>: 説得力向上</li>
+                    <li><span class="highlight">継続的改善</span>: PDCA高速化</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>組織能力強化</h3>
+                <ul>
+                    <li><span class="highlight">スキル標準化</span>: 全員が高度分析可能</li>
+                    <li><span class="highlight">ナレッジ蓄積</span>: 再利用可能なツール群</li>
+                    <li><span class="highlight">差別化</span>: 他社にない分析力</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- スライド12: まとめ -->
+    <div class="slide">
+        <h2>💡 まとめ：MCPがもたらす変革</h2>
+        <div style="display: flex; justify-content: space-around; width: 100%; max-width: 1200px;">
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>🔄 パラダイムシフト</h3>
+                <ul>
+                    <li>「分析できる人」から「全員が分析できる」組織へ</li>
+                    <li>「事後対応」から「予防的運用」へ</li>
+                    <li>「経験則」から「データサイエンス」へ</li>
+                </ul>
+            </div>
+            <div class="benefit-card" style="flex: 1; margin: 0 15px;">
+                <h3>🎯 競争優位性</h3>
+                <ul>
+                    <li><strong>圧倒的なスピード</strong>: 他社が数日かかる分析を数分で</li>
+                    <li><strong>高度な専門性</strong>: データサイエンスレベルの分析を全員が</li>
+                    <li><strong>継続的革新</strong>: 常に最新手法を活用</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="definition-box" style="margin-top: 30px;">
+            <h3 style="color: #1A2B1A; margin-top: 0;">キーメッセージ</h3>
+            <p style="font-size: 1.4em; font-style: italic; color: #2C3E2D;">
+                <span class="highlight">MCPは「AI活用」を「AI協働」に変える<br>
+                広告代理店の業務を根本的に革新する可能性</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- ナビゲーション -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">◀ 前へ</button>
+        <button class="nav-btn" onclick="nextSlide()">次へ ▶</button>
+    </div>
+
+    <!-- スライドカウンター -->
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">10</span>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('total-slides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        // キーボードナビゲーション
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+        
+        // クリックナビゲーション
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.nav-btn')) return;
+            if (e.clientX > window.innerWidth / 2) {
+                nextSlide();
+            } else {
+                previousSlide();
+            }
+        });
+    </script>
+</body>
+</html>
